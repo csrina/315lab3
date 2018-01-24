@@ -7,11 +7,20 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
+)
+
+const (
+	host   = "localhost"
+	port   = 5432
+	user   = "postgres"
+	dbname = "post315lab3"
 )
 
 // student represents all of the data stored for a single student
@@ -171,14 +180,24 @@ func executeCommand(db *sqlx.DB) error {
 // connectToDB connects to an SQL database and provides a pointer to
 // the connected database
 func connectToDB() (*sqlx.DB, error) {
-	return nil, errors.New("must write code to connect to the database")
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable", host, port, user, dbname)
+	db, err := sqlx.Open("postgres", psqlInfo)
+	return db, err
+}
+
+func hello(w http.ResponseWriter, r *http.Request) {
+	io.WriteString(w, "Attemptin to start server")
 }
 
 func main() {
+	http.HandleFunc("/", hello)
+	http.ListenAndServe(":8000", nil)
 	db, err := connectToDB()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cannot connect to database: %v\n", err)
 		os.Exit(1)
+	} else {
+		fmt.Println("Connected to do db")
 	}
 
 	err = executeCommand(db)
